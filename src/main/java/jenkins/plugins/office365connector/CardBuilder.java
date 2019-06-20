@@ -39,8 +39,10 @@ public class CardBuilder {
     public Card createStartedCard() {
         factsBuilder.addStatusStarted();
         factsBuilder.addRemarks();
-        factsBuilder.addCulprits();
+        //factsBuilder.addCulprits();
         factsBuilder.addDevelopers();
+        factsBuilder.addCommitMessage();
+        factsBuilder.addAffectedFiles();
 
         String jobName = getDisplayName();
         // TODO: dot in the message with single sentence should be removed
@@ -56,6 +58,7 @@ public class CardBuilder {
     }
 
     public Card createCompletedCard() {
+        String color = "";
         String jobName = getDisplayName();
         // result might be null only for ongoing job - check documentation of Result.getCompletedResult()
         Result lastResult = getCompletedResult(run);
@@ -70,22 +73,26 @@ public class CardBuilder {
 
         if (lastResult == Result.FAILURE) {
             Run failingSinceRun = getFailingSince(lastNotFailedBuild);
-
+            color = "#EF2929";
             if (failingSinceRun != null && previousResult == Result.FAILURE) {
                 factsBuilder.addFailingSinceBuild(failingSinceRun.number);
             }
+        } else {
+            color = "#4DFF4D";
         }
         factsBuilder.addStatus(calculateStatus(lastResult, previousResult, isRepeatedFailure));
         factsBuilder.addRemarks();
-        factsBuilder.addCulprits();
+        //factsBuilder.addCulprits();
         factsBuilder.addDevelopers();
+        factsBuilder.addCommitMessage();
+        factsBuilder.addAffectedFiles();
 
         String activityTitle = "Update from " + jobName + ".";
         String activitySubtitle = "Latest status of build " + getRunName();
         Section section = new Section(activityTitle, activitySubtitle, factsBuilder.collect());
 
         Card card = new Card(summary, section);
-        card.setThemeColor(lastResult.color.getHtmlBaseColor());
+        card.setThemeColor(color);
         card.setPotentialAction(potentialActionBuilder.buildActionable());
 
         return card;

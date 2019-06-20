@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Collection;
 
 import hudson.model.Cause;
 import hudson.model.Run;
@@ -37,6 +38,8 @@ public class FactsBuilder {
     public final static String NAME_REMARKS = "Remarks";
     final static String CULPRITS = "Culprits";
     public final static String NAME_DEVELOPERS = "Developers";
+    public final static String NAME_CHANGES = "Commit Message";
+    public final static String NAME_AFFECTED_FILES = "Affected Files";
 
     final static String NAME_FAILING_SINCE_BUILD = "Failing since build";
 
@@ -104,6 +107,39 @@ public class FactsBuilder {
                         .forEach(entry -> authors.add(entry.getAuthor())));
 
         addFact(NAME_DEVELOPERS, StringUtils.join(authors, ", "));
+    }
+    public void addCommitMessage(){
+        if (!(run instanceof RunWithSCM)) {
+            return;
+        }
+        RunWithSCM runWithSCM = (RunWithSCM) run;
+
+        List<ChangeLogSet<ChangeLogSet.Entry>> sets = runWithSCM.getChangeSets();
+
+        // TODO: this contains duplicates
+        List<String> commit = new ArrayList<>();
+        sets.stream()
+                .filter(set -> set instanceof ChangeLogSet)
+                .forEach(set -> set
+                        .forEach(entry -> commit.add(entry.getMsg().toString().replaceAll("_", "\\\\_"))));
+        addFact(NAME_CHANGES, StringUtils.join(commit, ", "));
+    }
+    //TEST AFFECTED FILES PENDING!
+    public void addAffectedFiles(){
+        if (!(run instanceof RunWithSCM)) {
+            return;
+        }
+        RunWithSCM runWithSCM = (RunWithSCM) run;
+
+        List<ChangeLogSet<ChangeLogSet.Entry>> sets = runWithSCM.getChangeSets();
+
+        // TODO: this contains duplicates
+        List<String> affectedPaths = new ArrayList<>();
+        sets.stream()
+                .filter(set -> set instanceof ChangeLogSet)
+                .forEach(set -> set
+                        .forEach(entry -> affectedPaths.add(entry.getAffectedPaths().toString().replaceAll("_", "\\\\_")))); //toString() Added to verify if Underscores are allowed
+        addFact(NAME_AFFECTED_FILES, StringUtils.join(affectedPaths, ", "));
     }
 
     public void addFact(String name, String value) {
